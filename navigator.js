@@ -570,10 +570,21 @@ export class PresetNavigator {
             btn.disabled = true; btn.innerHTML = `<i class="fa-solid fa-upload"></i> Load Selected Preset`;
         }
     }
+    /**
+     * Applies the selected preset to SillyTavern's preset system
+     * 
+     * This is the core preset attachment mechanism. It finds the target preset dropdown
+     * for the current API type, sets its value to the selected preset key, and dispatches
+     * a change event to trigger SillyTavern's native preset loading system.
+     * 
+     * @see docs/presets-integration.md#preset-application-mechanism
+     * @returns {Promise<void>}
+     */
     async loadSelectedPreset() {
         if (this.selectedPreset.value === null) return;
         const select = document.querySelector(`select[data-preset-manager-for="${this.apiType}"]`);
         if (select) {
+            // Set preset value and trigger SillyTavern's native preset loading
             select.value = this.selectedPreset.value;
             select.dispatchEvent(new Event('change', { bubbles: true }));
             // The popup will be closed by the onclose handler we set up.
@@ -684,6 +695,8 @@ export class PresetNavigator {
                 if (Object.keys(openai_setting_names).includes(fileName)) {
                     if (!await callGenericPopup(`Preset "${fileName}" already exists. Overwrite?`, POPUP_TYPE.CONFIRM)) { if (document.body.contains(input)) document.body.removeChild(input); return; }
                 }
+                // TODO: This API endpoint is specific to OpenAI presets. Consider making this API-agnostic
+                // by detecting the preset type and using the appropriate endpoint
                 const saveResponse = await fetch(`/api/presets/save-openai?name=${encodeURIComponent(fileName)}`, { method: 'POST', headers: getRequestHeaders(), body: JSON.stringify(presetBody) });
                 if (!saveResponse.ok) throw new Error(`Server failed to save: ${await saveResponse.text()}`);
                 const { name: newName, key: newKey } = await saveResponse.json();
@@ -782,6 +795,16 @@ export class PresetNavigator {
     }
 }
 
+/**
+ * Renders favorite preset buttons for quick access
+ * 
+ * Creates one-click preset loading buttons below each API's preset dropdown.
+ * Each button directly applies the preset by setting the dropdown value and
+ * triggering a change event.
+ * 
+ * @param {string} apiType - The API type to render favorites for
+ * @see docs/presets-integration.md#favorites-system
+ */
 function renderFavorites(apiType) {
     const container = document.getElementById(`nemo-favorites-container-${apiType}`);
     const select = document.querySelector(`select[data-preset-manager-for="${apiType}"]`);
@@ -803,6 +826,7 @@ function renderFavorites(apiType) {
             button.textContent = option.textContent;
             button.title = `Load preset: ${option.textContent}`;
             button.addEventListener('click', () => {
+                // Direct preset application - same mechanism as loadSelectedPreset
                 select.value = presetId;
                 select.dispatchEvent(new Event('change'));
             });
@@ -811,6 +835,16 @@ function renderFavorites(apiType) {
     }
 }
 
+/**
+ * Initializes preset navigation enhancements for a specific API type
+ * 
+ * This function patches SillyTavern's native preset dropdowns to add the "Browse..." button
+ * and favorites container. It's the main entry point for extending preset UI functionality.
+ * 
+ * @param {string} apiType - The API type (e.g., 'openai', 'claude', 'anthropic')
+ * @see docs/presets-integration.md#entry-points-and-responsibilities
+ * @see content.js:116 for supported API types
+ */
 export function initPresetNavigatorForApi(apiType) {
     const selector = `select[data-preset-manager-for="${apiType}"]`;
     const originalSelect = document.querySelector(selector);

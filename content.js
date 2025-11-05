@@ -103,6 +103,14 @@ waitForElement('#left-nav-panel', async () => {
         };
 
         // Simple observer for critical functionality only - matches original behavior
+        /**
+         * Main DOM mutation observer for preset integration
+         * 
+         * This observer detects when SillyTavern's preset UI elements appear and
+         * automatically enhances them with NemoPresetExt functionality.
+         * 
+         * @see docs/presets-integration.md#event-and-observer-wiring
+         */
         const observer = new MutationObserver((mutations) => {
             // Initialize Prompt Manager sections when the list appears
             const promptList = document.querySelector(CONSTANTS.SELECTORS.PROMPT_CONTAINER);
@@ -113,6 +121,7 @@ waitForElement('#left-nav-panel', async () => {
             }
 
             // Patch API preset dropdowns with the "Browse..." button
+            // TODO: Move supported APIs list to constants.js for easier maintenance
             const supportedApis = ['openai', 'novel', 'kobold', 'textgenerationwebui', 'anthropic', 'claude', 'google', 'scale', 'cohere', 'mistral', 'aix', 'openrouter'];
             supportedApis.forEach(api => {
                 const select = document.querySelector(`select[data-preset-manager-for="${api}"]`);

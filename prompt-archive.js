@@ -80,9 +80,19 @@ export const NemoPromptArchive = {
         }
     },
 
+    /**
+     * Retrieves current prompt data from SillyTavern's global state
+     * 
+     * This function directly accesses SillyTavern's internal prompt storage to create
+     * snapshots and archives. It reads from the global oai_settings object.
+     * 
+     * @returns {Object} Object containing prompts array and prompt_order object
+     * @see docs/presets-integration.md#snapshots-and-archives
+     */
     getCurrentPrompts: function() {
         try {
             // Access SillyTavern's prompt data
+            // TODO: Consider using event-based access if available for better encapsulation
             if (window.oai_settings && window.oai_settings.prompts) {
                 return {
                     prompts: [...window.oai_settings.prompts],
